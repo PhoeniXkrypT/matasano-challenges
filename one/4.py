@@ -35,14 +35,16 @@ class SingleXor(object):
         try:
             possible_data = printable_strings[position]
             if all(i in eng_text for i in possible_data):
-                print possible_data
+                return possible_data
         except:
-                raise ValueError
+            raise ValueError
 
 lines = [line.strip() for line in open('set1_4.txt')]
 for each in lines:
     try:
         string_xor = SingleXor(each)
-        string_xor.decrypt()
+        result = string_xor.decrypt()
+        if result:
+            assert result == "Now that the party is jumping\n"
     except ValueError, e:
         pass
