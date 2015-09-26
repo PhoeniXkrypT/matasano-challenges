@@ -21,13 +21,13 @@ class SingleXor(object):
                 printable_strings.append(temp)
         # find freq difference with standard values
         for each_string in printable_strings:
-            freq_table = {i : 0 for i in string.uppercase}
+            freq_table = {i: 0 for i in string.uppercase}
             length = float(len(each_string))
             each_string = filter(lambda x:x in string.letters, \
-                                               each_string.upper())
+                                 each_string.upper())
             for each in each_string:
-                    freq_table[each] += 1
-            freq_table = {i : freq_table[i]/length for i in freq_table}
+                freq_table[each] += 1
+            freq_table = {i: freq_table[i]/length for i in freq_table}
             freq_diff.append(sum([abs(std_freq[a] - freq_table[a]) \
                                   for a in std_freq]))
         position = freq_diff.index(min(freq_diff))
