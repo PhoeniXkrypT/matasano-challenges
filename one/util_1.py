@@ -9,6 +9,10 @@ std_freq = {
     'P':1.929, 'Q':0.095, 'R':5.987, 'S':6.327, 'T':9.056,
     'U':2.758, 'V':0.978, 'W':2.360, 'X':0.150, 'Y':1.974,
     'Z':0.074 }
+eng_text = string.letters + string.digits + string.whitespace + ". ' ! ?"
+
+class SingleXorException(Exception):
+    pass
 
 def hex_to_base64(hexstring):
     return base64.b64encode(hexstring.decode("hex"))
@@ -31,20 +35,26 @@ class SingleXor(object):
         for key in xrange(256):
             temp = ''.join([chr(ord(i) ^ key) for i in self.cipher])
             if all(i in string.printable for i in temp):
-                printable_strings.append(temp)
+                    printable_strings.append(temp)
         # find freq difference with standard values
         for each_string in printable_strings:
-            freq_table = {i: 0 for i in string.uppercase}
+            freq_table = {i : 0 for i in string.uppercase}
             length = float(len(each_string))
             each_string = filter(lambda x:x in string.letters, \
-                                 each_string.upper())
+                                               each_string.upper())
             for each in each_string:
-                freq_table[each] += 1
-            freq_table = {i: freq_table[i]/length for i in freq_table}
+                    freq_table[each] += 1
+            freq_table = {i : freq_table[i]/length for i in freq_table}
             freq_diff.append(sum([abs(std_freq[a] - freq_table[a]) \
                                   for a in std_freq]))
-        position = freq_diff.index(min(freq_diff))
-        return printable_strings[position]
+        try:
+            position = freq_diff.index(min(freq_diff))
+            possible_data = printable_strings[position]
+            if all(i in eng_text for i in possible_data):
+                return possible_data
+        except ValueError, e:
+            raise SingleXorException("Freqency difference empty")
+        raise SingleXorException("Other characters")
 
 def main():
     if sys.argv[1] == "1":
@@ -54,6 +64,14 @@ def main():
     elif sys.argv[1] == "3":
         string_xor = SingleXor("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
         assert string_xor.decrypt() == "Cooking MC's like a pound of bacon"
+    elif sys.argv[1] == "4":
+        lines = [line.strip() for line in open('set1_4.txt')]
+        for each in lines:
+            string_xor = SingleXor(each)
+            try:
+                assert string_xor.decrypt() == "Now that the party is jumping\n"
+            except SingleXorException, e:
+                pass
 
 if __name__ == '__main__':
     main()
