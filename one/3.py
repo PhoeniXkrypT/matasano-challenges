@@ -1,4 +1,5 @@
 import string
+
 std_freq = {
     'A':8.167, 'B':1.492, 'C':2.782, 'D':4.253, 'E':12.702,
     'F':2.228, 'G':2.015, 'H':6.094, 'I':6.996, 'J':0.153,
@@ -9,34 +10,28 @@ std_freq = {
 
 class SingleXor(object):
     def __init__(self, cipher):
-        self.cipher = cipher
+        self.cipher = cipher.decode('hex')
 
     def decrypt(self):
-        decoded_data = self.cipher.decode('hex')
-        printable_stings = []
+        printable_strings = []
         freq_diff = []
         for key in xrange(256):
-            temp = ""
-            flag = False
-            for char in decoded_data:
-                xored_char = chr(ord(char) ^ key)
-                if xored_char in string.printable:
-                    temp += xored_char
-                else:
-                    flag = True
-                    break
-            if not flag:
-                printable_stings.append(temp)
+            temp = ''.join([chr(ord(i) ^ key) for i in self.cipher])
+            if all(i in string.printable for i in temp):
+                printable_strings.append(temp)
         # find freq difference with standard values
-        for each_string in printable_stings:
+        for each_string in printable_strings:
             freq_table = {i : 0 for i in string.uppercase}
-            for each in each_string.upper():
-                if each in string.uppercase:
-                    freq_table[each] += 1/float(len(each_string))
-            freq_diff.append(sum([abs(std_freq[a]-freq_table[b]) \
-                                  for a,b in zip(std_freq, freq_table)]))
+            length = float(len(each_string))
+            each_string = filter(lambda x:x in string.letters, \
+                                               each_string.upper())
+            for each in each_string:
+                    freq_table[each] += 1
+            freq_table = {i : freq_table[i]/length for i in freq_table}
+            freq_diff.append(sum([abs(std_freq[a] - freq_table[a]) \
+                                  for a in std_freq]))
         position = freq_diff.index(min(freq_diff))
-        print printable_stings[position]
+        print printable_strings[position]
 
 
 string_xor = SingleXor("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
