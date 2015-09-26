@@ -31,8 +31,8 @@ class SingleXor(object):
             freq_table = {i : freq_table[i]/length for i in freq_table}
             freq_diff.append(sum([abs(std_freq[a] - freq_table[a]) \
                                   for a in std_freq]))
+        position = freq_diff.index(min(freq_diff))
         try:
-            position = freq_diff.index(min(freq_diff))
             possible_data = printable_strings[position]
             if all(i in eng_text for i in possible_data):
                 print possible_data
