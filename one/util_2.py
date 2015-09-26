@@ -1,11 +1,9 @@
-
 def fixed_xor(hexstring_one, hexstring_two):
     assert len(hexstring_one) == len(hexstring_two)
-    decoded_one = hexstring_one.decode("hex")
-    decoded_two = hexstring_two.decode("hex")
-    xored_string = ""
-    for i, j in zip(decoded_one, decoded_two):
-        xored_string += chr(ord(i) ^ ord(j))
+    decoded_one, decoded_two = hexstring_one.decode("hex"), \
+            hexstring_two.decode("hex")
+    xored_string = ''.join([chr(ord(i) ^ ord(j))  \
+            for i,j in zip(decoded_one, decoded_two)])
     return xored_string.encode("hex")
 
 def main():
