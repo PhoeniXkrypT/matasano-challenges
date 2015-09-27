@@ -56,6 +56,19 @@ class SingleXor(object):
             raise SingleXorException("Freqency difference empty")
         raise SingleXorException("Other characters")
 
+class RepeatingXor(object):
+    def __init__(self, data, key):
+        self.data = data
+        self.key = key
+
+    def encrypt(self):
+        repeat_key = ''.join([self.key for i in \
+                              xrange(0, len(self.data), len(self.key))])
+        xored_string = ''.join([chr(ord(i) ^ ord(j)) \
+                                for i,j in zip(self.data, repeat_key)])
+        return xored_string.encode('hex')
+
+
 def main():
     if sys.argv[1] == "1":
         assert hex_to_base64("49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d") == "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"
@@ -72,6 +85,9 @@ def main():
                 assert string_xor.decrypt() == "Now that the party is jumping\n"
             except SingleXorException, e:
                 pass
+    elif sys.argv[1] == "5":
+        repeat_xor = RepeatingXor("Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal", "ICE")
+        assert repeat_xor.encrypt() == '0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f'
 
 if __name__ == '__main__':
     main()
