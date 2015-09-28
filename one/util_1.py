@@ -30,12 +30,12 @@ class SingleXor(object):
         self.cipher = cipher.decode('hex')
 
     def decrypt(self):
-        printable_strings = []
-        freq_diff = []
+        printable_strings, p_string_index, freq_diff = [], [], []
         for key in xrange(256):
             temp = ''.join([chr(ord(i) ^ key) for i in self.cipher])
             if all(i in string.printable for i in temp):
                     printable_strings.append(temp)
+                    p_string_index.append(key)
         # find freq difference with standard values
         for each_string in printable_strings:
             freq_table = {i : 0 for i in string.uppercase}
@@ -51,7 +51,7 @@ class SingleXor(object):
             position = freq_diff.index(min(freq_diff))
             possible_data = printable_strings[position]
             if all(i in eng_text for i in possible_data):
-                return possible_data
+                return (possible_data, p_string_index[position])
         except ValueError, e:
             raise SingleXorException("Freqency difference empty")
         raise SingleXorException("Other characters")
@@ -64,6 +64,7 @@ class RepeatingXor(object):
     def encrypt(self):
         repeat_key = ''.join([self.key for i in \
                               xrange(0, len(self.data), len(self.key))])
+        repeat_key = repeat_key[:len(self.data)]
         xored_string = ''.join([chr(ord(i) ^ ord(j)) \
                                 for i,j in zip(self.data, repeat_key)])
         return xored_string.encode('hex')
@@ -76,13 +77,13 @@ def main():
         assert fixed_xor("1c0111001f010100061a024b53535009181c", "686974207468652062756c6c277320657965") == "746865206b696420646f6e277420706c6179"
     elif sys.argv[1] == "3":
         string_xor = SingleXor("1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736")
-        assert string_xor.decrypt() == "Cooking MC's like a pound of bacon"
+        assert string_xor.decrypt()[0] == "Cooking MC's like a pound of bacon"
     elif sys.argv[1] == "4":
         lines = [line.strip() for line in open('set1_4.txt')]
         for each in lines:
             string_xor = SingleXor(each)
             try:
-                assert string_xor.decrypt() == "Now that the party is jumping\n"
+                assert string_xor.decrypt()[0] == "Now that the party is jumping\n"
             except SingleXorException, e:
                 pass
     elif sys.argv[1] == "5":
