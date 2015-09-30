@@ -39,11 +39,24 @@ class SingleXor(object):
         try:
             position = freq_diff.index(min(freq_diff))
             possible_data = printable_strings[position]
-            if all(i in eng_text for i in possible_data):
-                return (possible_data, p_string_index[position])
+            #if all(i in eng_text for i in possible_data):
+            return (possible_data, p_string_index[position])
         except ValueError, e:
             raise SingleXorException("Freqency difference empty")
         raise SingleXorException("Other characters")
+
+class RepeatingXor(object):
+    def __init__(self, data, key):
+        self.data = data
+        self.key = key
+
+    def encrypt(self):
+        repeat_key = ''.join([self.key for i in \
+                              xrange(0, len(self.data), len(self.key))])
+        repeat_key = repeat_key[:len(self.data)]
+        xored_string = ''.join([chr(ord(i) ^ ord(j)) \
+                                for i,j in zip(self.data, repeat_key)])
+        return xored_string.encode('hex')
 
 def edit_distance(string_one, string_two):
     string_one_binary, string_two_binary = bin(int(binascii.hexlify(string_one), 16)), bin(int(binascii.hexlify(string_two), 16))
@@ -56,13 +69,32 @@ def find_keysize(lines):
         chunks = [lines[i:i+KEYSIZE] for i in \
                   xrange(0, len(lines), KEYSIZE)]
         edits.append(sum(edit_distance(one, two)/KEYSIZE \
-                for one, two in zip(chunks, chunks[1:])))
-    return sum([edits.index(each)-2 for each in sorted(edits)[:4]])/4
+                for one, two in zip(chunks, chunks[1:]))/float(len(chunks[1:])))
+    return [edits.index(each)+2 for each in sorted(edits)[:2]]
 
-assert edit_distance("this is a test", "wokka wokka!!!") == 37
+def transpose_blocks(keysize, data):
+    cipher_blocks = [data[i:i+keysize] for i in xrange(0, len(data), keysize)]
+    blocks =[]
+#        [blocks.append(''.join([each[i] for each in cipher_blocks])) for i in xrange(len(cipher_blocks[0]))]
+    for i in xrange(len(cipher_blocks[0])):
+        temp=[]
+        for each in cipher_blocks:
+            try:
+                temp.append(each[i])
+            except IndexError, e:
+                pass
+        blocks.append(''.join(temp))
+    return blocks
+
 _lines = ''.join([line.strip() for line in open('set1_6.txt')])
 lines = base64.b64decode(_lines)
-print lines
 keysize = find_keysize(lines)
-print keysize
-cipher_blocks = [lines[i:i+keysize] for i in xrange(0,len(lines), keysize)]
+blocks_trans = transpose_blocks(keysize[1], lines)
+temp=[]
+for i, each in enumerate(blocks_trans):
+    single_xor = SingleXor(each.encode('hex'))
+    temp.append(chr(single_xor.decrypt()[1]))
+key = ''.join(temp)
+print key
+repeat_xor = RepeatingXor(lines, key)
+repeat_xor.encrypt().decode('hex')
