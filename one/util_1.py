@@ -1,7 +1,8 @@
-import string
 import sys
+import string
 import base64
 from Crypto.Cipher import AES
+from collections import Counter
 
 std_freq = {
     'A':8.167, 'B':1.492, 'C':2.782, 'D':4.253, 'E':12.702,
@@ -74,6 +75,13 @@ def AES_ECB(cipher, key):
     aes_obj = AES.new(key, AES.MODE_ECB)
     return aes_obj.decrypt(cipher)
 
+def check_ECB(data, blocksize):
+    repeated_blocks = []
+    for each in data:
+        blocks = [each[i:i+blocksize] for i in xrange(0, len(each), blocksize)]
+        if Counter(blocks).most_common()[0][1] > 1:
+            repeated_blocks.append((Counter(blocks).most_common()[0][1], each))
+    return repeated_blocks
 
 def main():
     if sys.argv[1] == "1":
@@ -97,6 +105,11 @@ def main():
     elif sys.argv[1] == "7":
         lines = ''.join([line.strip() for line in open('set1_7.txt')])
         assert AES_ECB(base64.b64decode(lines), "YELLOW SUBMARINE").encode('hex') == ''.join([line.strip() for line in open('out_7.txt')])
+    elif sys.argv[1] == "8":
+        lines = [line.strip() for line in open('set1_8.txt')]
+        blocksize = 16
+        assert max(check_ECB(lines, blocksize))[1] == "d880619740a8a19b7840a8a31c810a3d08649af70dc06f4fd5d2d69c744cd283e2dd052f6b641dbf9d11b0348542bb5708649af70dc06f4fd5d2d69c744cd2839475c9dfdbc1d46597949d9c7e82bf5a08649af70dc06f4fd5d2d69c744cd28397a93eab8d6aecd566489154789a6b0308649af70dc06f4fd5d2d69c744cd283d403180c98c8f6db1f2a3f9c4040deb0ab51b29933f2c123c58386b06fba186a"
+
 
 if __name__ == '__main__':
     main()
