@@ -1,6 +1,7 @@
-import sys
 import string
+import sys
 import base64
+from Crypto.Cipher import AES
 
 std_freq = {
     'A':8.167, 'B':1.492, 'C':2.782, 'D':4.253, 'E':12.702,
@@ -69,6 +70,10 @@ class RepeatingXor(object):
                                 for i,j in zip(self.data, repeat_key)])
         return xored_string.encode('hex')
 
+def AES_ECB(cipher, key):
+    aes_obj = AES.new(key, AES.MODE_ECB)
+    return aes_obj.decrypt(cipher)
+
 
 def main():
     if sys.argv[1] == "1":
@@ -89,6 +94,9 @@ def main():
     elif sys.argv[1] == "5":
         repeat_xor = RepeatingXor("Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal", "ICE")
         assert repeat_xor.encrypt() == '0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f'
+    elif sys.argv[1] == "7":
+        lines = ''.join([line.strip() for line in open('set1_7.txt')])
+        assert AES_ECB(base64.b64decode(lines), "YELLOW SUBMARINE").encode('hex') == ''.join([line.strip() for line in open('out_7.txt')])
 
 if __name__ == '__main__':
     main()
