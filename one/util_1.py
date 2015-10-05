@@ -71,16 +71,17 @@ class RepeatingXor(object):
                                 for i,j in zip(self.data, repeat_key)])
         return xored_string.encode('hex')
 
-def AES_ECB(cipher, key):
+def AES_ECB_decrypt(cipher, key):
     aes_obj = AES.new(key, AES.MODE_ECB)
     return aes_obj.decrypt(cipher)
 
-def check_ECB(data, blocksize):
+def check_ECB(ciphers, blocksize):
     repeated_blocks = []
-    for each in data:
-        blocks = [each[i:i+blocksize] for i in xrange(0, len(each), blocksize)]
-        if Counter(blocks).most_common()[0][1] > 1:
-            repeated_blocks.append((Counter(blocks).most_common()[0][1], each))
+    for each in ciphers:
+        each = each.decode('hex')
+        commom_block_count = Counter([each[i:i+blocksize] for i in xrange(0, len(each), blocksize)]).most_common()
+        if commom_block_count[0][1] > 1:
+            repeated_blocks.append((commom_block_count[0][1], each.encode('hex')))
     return repeated_blocks
 
 def main():
@@ -104,7 +105,7 @@ def main():
         assert repeat_xor.encrypt() == '0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f'
     elif sys.argv[1] == "7":
         lines = ''.join([line.strip() for line in open('set1_7.txt')])
-        assert AES_ECB(base64.b64decode(lines), "YELLOW SUBMARINE").encode('hex') == ''.join([line.strip() for line in open('out_7.txt')])
+        assert AES_ECB_decrypt(base64.b64decode(lines), "YELLOW SUBMARINE").encode('hex') == ''.join([line.strip() for line in open('out_7.txt')])
     elif sys.argv[1] == "8":
         lines = [line.strip() for line in open('set1_8.txt')]
         blocksize = 16
