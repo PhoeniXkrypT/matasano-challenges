@@ -15,6 +15,4 @@ def AES_CBC_decrypt(cipher, key, IV, blocksize):
 
 lines = ''.join([line.strip() for line in open('set2_10.txt')])
 blocksize = 16
-assert AES_CBC_decrypt(base64.b64decode(lines), "YELLOW SUBMARINE",\
-                      (chr(0) * blocksize), blocksize).encode('hex') == \
-       ''.join([line.strip() for line in open('out_10.txt')])
+assert AES_CBC_decrypt(base64.b64decode(lines), "YELLOW SUBMARINE", (chr(0) * blocksize), blocksize).encode('hex') == ''.join([line.strip() for line in open('out_10.txt')])
