@@ -73,10 +73,8 @@ def main():
     elif sys.argv[1] == "11":
         blocksize = 16
         cipher, mode = encryption_oracle("A" * 1500, blocksize)
-        if encryption_mode_detector(cipher, blocksize):
-            assert mode == 1
-        else:
-            assert mode == 0
+        detected_mode = encryption_mode_detector(cipher, blocksize)
+        assert mode == detected_mode
 
 
 if __name__ == '__main__':
