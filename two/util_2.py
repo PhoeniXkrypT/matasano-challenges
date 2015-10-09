@@ -5,6 +5,8 @@ from Crypto.Cipher import AES
 
 import util_1 as util
 
+get_random_string = lambda l : ''.join([chr(random.randint(0,255)) for i in xrange(l)])
+
 def pkcs7_padding(message, blocksize):
     if len(message) % blocksize == 0:
         padding_value = blocksize
@@ -41,22 +43,22 @@ def AES_CBC_decrypt(cipher, key, IV, blocksize):
         prev_block = current_block.encode('hex')
     return ''.join(decrypted_blocks)
 
-def generate_AESkeys(blocksize):
+def generate_AESkeys(blocksize = 16):
     return ''.join([chr(random.randint(0, 255)) for i in xrange(blocksize)])
 
-def encryption_oracle(message, blocksize):
-    key = generate_AESkeys(blocksize)
-    modified_message = ''.join([chr(random.randint(0,255)) for i in xrange(random.randint(5,10))]) + message + \
-                       ''.join([chr(random.randint(0,255)) for i in xrange(random.randint(5,10))])
+def encryption_oracle(message, blocksize=16):
+    key = generate_AESkeys()
+    modified_message = get_random_string(random.randint(5,10)) + message + \
+                       get_random_string(random.randint(5,10))
     modified_message = pkcs7_padding(modified_message, blocksize)
     mode = random.randrange(2)      # 0 = ECB, 1 = CBC
     if mode == 0:
         return util.AES_ECB_encrypt(modified_message, key), mode
     else:
-        IV = ''.join([chr(random.randint(0,255)) for i in xrange(blocksize)])
+        IV = get_random_string(blocksize)
         return AES_CBC_encrypt(modified_message, key, IV, blocksize), mode
 
-def encryption_mode_detector(cipher, blocksize):
+def encryption_mode_detector(cipher, blocksize=16):
     try:
         if max(util.check_ECB([cipher.encode('hex')], blocksize))[0] > 1:
             return 0
@@ -71,11 +73,9 @@ def main():
         blocksize = 16
         assert AES_CBC_decrypt(base64.b64decode(lines), "YELLOW SUBMARINE", (chr(0) * blocksize), blocksize).encode('hex') == ''.join([line.strip() for line in open('out_10.txt')])
     elif sys.argv[1] == "11":
-        blocksize = 16
-        cipher, mode = encryption_oracle("A" * 1500, blocksize)
-        detected_mode = encryption_mode_detector(cipher, blocksize)
+        cipher, mode = encryption_oracle("A" * 60)
+        detected_mode = encryption_mode_detector(cipher)
         assert mode == detected_mode
-
 
 if __name__ == '__main__':
     main()
