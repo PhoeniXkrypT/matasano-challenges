@@ -58,12 +58,46 @@ def encryption_oracle(message, blocksize=16):
         IV = get_random_string(blocksize)
         return AES_CBC_encrypt(modified_message, key, IV, blocksize), mode
 
-def encryption_mode_detector(cipher, blocksize=16):
+def encryption_mode_detector(cipher):
     try:
-        if max(util.check_ECB([cipher.encode('hex')], blocksize))[0] > 1:
+        if max(util.check_ECB([cipher.encode('hex')]))[0] > 1:
             return 0
     except ValueError,e:
         return 1
+
+def byte_at_a_time():
+    AES_KEY = '.Rm\x10o\xaae\xf3coy}\xbf\x00\xa4&'
+
+    def _encryption_oracle(message, blocksize=16):
+        given_string = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK"
+        modified_message = pkcs7_padding(message + base64.b64decode(given_string), blocksize)
+        return util.AES_ECB_encrypt(modified_message, AES_KEY)
+
+    def detect_ECB_blocksize():
+        for i in xrange(5, 100):
+            enc = _encryption_oracle('A' * 2 * i)
+            try:
+                if util.check_ECB([enc.encode('hex')])[0][0] > 1:
+                    return i
+                else:
+                    return None
+            except IndexError,e:
+                pass
+
+    assert detect_ECB_blocksize() == 16
+    decoded_string = ""
+    _len = 144
+    for index in xrange(_len-1, 5, -1):
+        inputs_dict = {}
+        test_input = 'A' * index
+        for i in xrange(256):
+            inputs_dict[_encryption_oracle(test_input + decoded_string + chr(i))[:_len]] = chr(i)
+        try:
+            decoded_string += inputs_dict[_encryption_oracle(test_input)[:_len]]
+        except KeyError,e :
+            pass
+    return decoded_string
+
 
 def main():
     if sys.argv[1] == "9":
@@ -76,6 +110,8 @@ def main():
         cipher, mode = encryption_oracle("A" * 60)
         detected_mode = encryption_mode_detector(cipher)
         assert mode == detected_mode
+    elif sys.argv[1] == "12":
+        assert byte_at_a_time() == "Rollin' in my 5.0\nWith my rag-top down so my hair can blow\nThe girlies on standby waving just to say hi\nDid you stop? No, I just drove by\n"
 
 if __name__ == '__main__':
     main()
