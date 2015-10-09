@@ -69,8 +69,8 @@ def byte_at_a_time():
     AES_KEY = '.Rm\x10o\xaae\xf3coy}\xbf\x00\xa4&'
 
     def _encryption_oracle(message, blocksize=16):
-        given_string = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK"
-        modified_message = pkcs7_padding(message + base64.b64decode(given_string), blocksize)
+        unknown_string = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK"
+        modified_message = pkcs7_padding(message + base64.b64decode(unknown_string), blocksize)
         return util.AES_ECB_encrypt(modified_message, AES_KEY)
 
     def detect_ECB_blocksize():
