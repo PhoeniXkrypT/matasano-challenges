@@ -43,11 +43,8 @@ def AES_CBC_decrypt(cipher, key, IV, blocksize):
         prev_block = current_block.encode('hex')
     return ''.join(decrypted_blocks)
 
-def generate_AESkeys(blocksize = 16):
-    return ''.join([chr(random.randint(0, 255)) for i in xrange(blocksize)])
-
 def encryption_oracle(message, blocksize=16):
-    key = generate_AESkeys()
+    key = get_random_string(blocksize)
     modified_message = get_random_string(random.randint(5,10)) + message + \
                        get_random_string(random.randint(5,10))
     modified_message = pkcs7_padding(modified_message, blocksize)
@@ -98,6 +95,37 @@ def byte_at_a_time():
             pass
     return decoded_string
 
+def admin_profile():
+    key = get_random_string(16)
+        
+    def parsing_routine(data):
+        parsed = {}
+        for each in [pair.split('=') for pair in data.split('&')]:
+            parsed[each[0]] = each[1]
+        return parsed
+
+    def profile_for(mail_id):
+        if ('&' in mail_id) or ('=' in mail_id):
+            mail_id = mail_id.replace('&', '').replace('=','')
+        data = {'email':mail_id, 'uid':10, 'role':'user'}
+        return '&'.join(['%s=%s'%(each,data[each]) for each in ['email', 'uid','role']])
+
+    def profile_encrypt(mail, key, blocksize=16):
+        encoded_profile = profile_for(mail)
+        return util.AES_ECB_encrypt(pkcs7_padding(encoded_profile, blocksize), key)
+
+    def profile_decrypt(cipher, key, blocksize=16):
+        encoded_profile = pkcs7_unpadding(util.AES_ECB_decrypt(cipher, key), blocksize)
+        return parsing_routine(encoded_profile)
+
+    def create_admin(crafted_input, key):
+        encrypted = profile_encrypt(crafted_input, key)
+        add_admin = encrypted[:16] + encrypted[32:48] + encrypted[16:32]
+        return profile_decrypt(add_admin, key)
+
+    assert parsing_routine('foo=bar&baz=qux&zap=zazzle') == {'foo': 'bar', 'baz': 'qux', 'zap': 'zazzle'}
+    assert profile_decrypt(profile_encrypt('foo@bar.com', key), key) == {'role': 'user', 'email': 'foo@bar.com', 'uid': '10'}
+    return create_admin("abc@got.coadmin\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b.in", key)
 
 def main():
     if sys.argv[1] == "9":
@@ -112,6 +140,8 @@ def main():
         assert mode == detected_mode
     elif sys.argv[1] == "12":
         assert byte_at_a_time() == "Rollin' in my 5.0\nWith my rag-top down so my hair can blow\nThe girlies on standby waving just to say hi\nDid you stop? No, I just drove by\n"
+    elif sys.argv[1] == "13":
+        assert admin_profile() == {'role': 'admin', 'email': 'abc@got.co.in', 'uid': '10'}
 
 if __name__ == '__main__':
     main()
