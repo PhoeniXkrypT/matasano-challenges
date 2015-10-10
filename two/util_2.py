@@ -7,6 +7,9 @@ import util_1 as util
 
 get_random_string = lambda l : ''.join([chr(random.randint(0,255)) for i in xrange(l)])
 
+class PaddingException(Exception):
+    pass
+
 def pkcs7_padding(message, blocksize):
     if len(message) % blocksize == 0:
         padding_value = blocksize
@@ -15,8 +18,11 @@ def pkcs7_padding(message, blocksize):
     return message + (chr(padding_value) * padding_value)
 
 def pkcs7_unpadding(message, blocksize):
-   # if len(message) % blocksize != 0:
+   if len(message) % blocksize != 0:
+       raise PaddingException("Bad padding")
    padding_value = message[-1]
+   if message[-ord(padding_value):] != padding_value * ord(padding_value):
+       raise PaddingException("Bad padding")
    return message[:-ord(padding_value)]
 
 def AES_CBC_encrypt(message, key, IV, blocksize):
@@ -142,6 +148,15 @@ def main():
         assert byte_at_a_time() == "Rollin' in my 5.0\nWith my rag-top down so my hair can blow\nThe girlies on standby waving just to say hi\nDid you stop? No, I just drove by\n"
     elif sys.argv[1] == "13":
         assert admin_profile() == {'role': 'admin', 'email': 'abc@got.co.in', 'uid': '10'}
+    
+    elif sys.argv[1] == "15":
+        assert pkcs7_unpadding("ICE ICE BABY\x04\x04\x04\x04", 16) == "ICE ICE BABY"
+        try:
+            assert pkcs7_unpadding("ICE ICE BABY\x05\x05\x05\x05", 16) == "Bad padding"
+            assert pkcs7_unpadding("ICE ICE BABY\x01\x02\x03\x04", 16) == "Bad padding"
+        except PaddingException, e:
+            pass
+        
 
 if __name__ == '__main__':
     main()
