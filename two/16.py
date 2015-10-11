@@ -10,7 +10,7 @@ import util_2
 get_random_string = lambda l : ''.join([chr(random.randint(0,255)) for i in xrange(l)])
 
 def cbc_bitflipping_attack():
-    AES_KEY = '.Rm\x10o\xaae\xf3coy}\xbf\x00\xa4&'
+    AES_KEY = get_random_string(16)
 
     def encrypt_modify(input_string, blocksize=16):
         pre = "comment1=cooking%20MCs;userdata="
