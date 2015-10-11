@@ -24,13 +24,14 @@ def cbc_bitflipping_attack():
     def decrypt_search_admin(cipher, blocksize=16):
         padded_message = util_2.AES_CBC_decrypt(cipher, AES_KEY, chr(0)*blocksize, blocksize)
         message = util_2.pkcs7_unpadding(padded_message, blocksize)
-        print message
         return (";admin=true;" in message)
 
+    enc_data = encrypt_modify((chr(0)*21)+" admin true")
     for i in xrange(256):
         for j in xrange(256):
-    enc_data = encrypt_modify((chr(0)*22)+"admin"+chr(0)+"true")
-    enc_data = enc_data[:37] + chr(ord(enc_data[37]) ^ ord(';') ^ ord(chr(0)))+ enc_data[38:43] + chr(ord(enc_data[43]) ^ ord('=') ^ ord(chr(0))) + enc_data[44:]
-    return decrypt_search_admin(enc_data)
+            enc_data = enc_data[:37] + chr(i) + enc_data[38:43] + chr(j) + enc_data[44:]
+            if decrypt_search_admin(enc_data):
+                return True
+    return False
 
 assert cbc_bitflipping_attack() == True
