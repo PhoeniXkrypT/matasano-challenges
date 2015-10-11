@@ -6,7 +6,7 @@ import urllib
 from Crypto.Cipher import AES
 from collections import OrderedDict
 
-import util_1 as util
+import util_1
 
 get_random_string = lambda l : ''.join([chr(random.randint(0,255)) for i in xrange(l)])
 
@@ -34,8 +34,8 @@ def AES_CBC_encrypt(message, key, IV, blocksize):
     cipher_blocks =[]
     prev_block = IV.encode('hex')
     for current_block in message_blocks:
-        intermediate = util.fixed_xor(current_block.encode('hex'), prev_block)
-        current_cipher =util.AES_ECB_encrypt(intermediate.decode('hex'), key)
+        intermediate = util_1.fixed_xor(current_block.encode('hex'), prev_block)
+        current_cipher =util_1.AES_ECB_encrypt(intermediate.decode('hex'), key)
         cipher_blocks.append(current_cipher)
         prev_block = current_cipher.encode('hex')
     return ''.join(cipher_blocks)
@@ -46,8 +46,8 @@ def AES_CBC_decrypt(cipher, key, IV, blocksize):
     decrypted_blocks=[]
     prev_block = IV.encode('hex')
     for current_block in cipher_blocks:
-        intermediate = util.AES_ECB_decrypt(current_block, key).encode('hex')
-        decrypted_blocks.append(util.fixed_xor(intermediate, \
+        intermediate = util_1.AES_ECB_decrypt(current_block, key).encode('hex')
+        decrypted_blocks.append(util_1.fixed_xor(intermediate, \
                                  prev_block).decode('hex'))
         prev_block = current_block.encode('hex')
     return ''.join(decrypted_blocks)
@@ -59,14 +59,14 @@ def encryption_oracle(message, blocksize=16):
     modified_message = pkcs7_padding(modified_message, blocksize)
     mode = random.randrange(2)      # 0 = ECB, 1 = CBC
     if mode == 0:
-        return util.AES_ECB_encrypt(modified_message, key), mode
+        return util_1.AES_ECB_encrypt(modified_message, key), mode
     else:
         IV = get_random_string(blocksize)
         return AES_CBC_encrypt(modified_message, key, IV, blocksize), mode
 
 def encryption_mode_detector(cipher):
     try:
-        if max(util.check_ECB([cipher.encode('hex')]))[0] > 1:
+        if max(util_1.check_ECB([cipher.encode('hex')]))[0] > 1:
             return 0
     except ValueError,e:
         return 1
@@ -78,18 +78,18 @@ def byte_at_a_time(num):
     def s_encryption_oracle(message, blocksize=16):
         unknown_string = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK"
         modified_message = pkcs7_padding(message + base64.b64decode(unknown_string), blocksize)
-        return util.AES_ECB_encrypt(modified_message, AES_KEY)
+        return util_1.AES_ECB_encrypt(modified_message, AES_KEY)
 
     def h_encryption_oracle(message, blocksize=16):
         target = 'VHdvIHJvYWRzIGRpdmVyZ2VkIGluIGEgd29vZCwgYW5kIEktCkkgdG9vayB0aGUgb25lIGxlc3MgdHJhdmVsZWQgYnks'
         modified_message = pkcs7_padding(pre + message + base64.b64decode(target), blocksize)
-        return util.AES_ECB_encrypt(modified_message, AES_KEY)
+        return util_1.AES_ECB_encrypt(modified_message, AES_KEY)
 
     def detect_ECB_blocksize():
         for i in xrange(5, 100):
             enc = s_encryption_oracle('A' * 2 * i)
             try:
-                if util.check_ECB([enc.encode('hex')])[0][0] > 1:
+                if util_1.check_ECB([enc.encode('hex')])[0][0] > 1:
                     return i
                 else:
                     return None
@@ -146,10 +146,10 @@ def admin_profile():
 
     def profile_encrypt(mail, key, blocksize=16):
         encoded_profile = profile_for(mail)
-        return util.AES_ECB_encrypt(pkcs7_padding(encoded_profile, blocksize), key)
+        return util_1.AES_ECB_encrypt(pkcs7_padding(encoded_profile, blocksize), key)
 
     def profile_decrypt(cipher, key, blocksize=16):
-        encoded_profile = pkcs7_unpadding(util.AES_ECB_decrypt(cipher, key), blocksize)
+        encoded_profile = pkcs7_unpadding(util_1.AES_ECB_decrypt(cipher, key), blocksize)
         return parsing_routine(encoded_profile)
 
     def create_admin(crafted_input, key):
