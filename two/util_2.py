@@ -68,17 +68,23 @@ def encryption_mode_detector(cipher):
     except ValueError,e:
         return 1
 
-def byte_at_a_time():
+def byte_at_a_time(num):
     AES_KEY = '.Rm\x10o\xaae\xf3coy}\xbf\x00\xa4&'
 
-    def _encryption_oracle(message, blocksize=16):
+    def s_encryption_oracle(message, blocksize=16):
         unknown_string = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK"
         modified_message = pkcs7_padding(message + base64.b64decode(unknown_string), blocksize)
+        return util.AES_ECB_encrypt(modified_message, AES_KEY)
+    
+    def h_encryption_oracle(message, blocksize=16):
+        pre = 'c\xb3\xd1\xc8CL\x0e\xf0+\xe8'
+        target = 'VHdvIHJvYWRzIGRpdmVyZ2VkIGluIGEgd29vZCwgYW5kIEktCkkgdG9vayB0aGUgb25lIGxlc3MgdHJhdmVsZWQgYnks'
+        modified_message = pkcs7_padding(pre + message + base64.b64decode(target), blocksize)
         return util.AES_ECB_encrypt(modified_message, AES_KEY)
 
     def detect_ECB_blocksize():
         for i in xrange(5, 100):
-            enc = _encryption_oracle('A' * 2 * i)
+            enc = s_encryption_oracle('A' * 2 * i)
             try:
                 if util.check_ECB([enc.encode('hex')])[0][0] > 1:
                     return i
@@ -86,19 +92,43 @@ def byte_at_a_time():
                     return None
             except IndexError,e:
                 pass
-
-    assert detect_ECB_blocksize() == 16
-    decoded_string = ""
-    _len = 144
-    for index in xrange(_len-1, 5, -1):
-        inputs_dict = {}
-        test_input = 'A' * index
-        for i in xrange(256):
-            inputs_dict[_encryption_oracle(test_input + decoded_string + chr(i))[:_len]] = chr(i)
-        try:
-            decoded_string += inputs_dict[_encryption_oracle(test_input)[:_len]]
-        except KeyError,e :
-            pass
+    
+    def find_prefix_length():
+        for i in xrange(32, 48):
+            enc = h_encryption_oracle('A' * i)
+            blocks = [enc[16*j:16*(j+1)] for j in xrange(1, (len(enc)//16)+1)]
+            for k in xrange(0,len(blocks)-1):
+                if blocks[k] == blocks[k+1]:
+                    return (48 - i), k
+        return None
+    
+    if num == 0:
+        assert detect_ECB_blocksize() == 16
+        decoded_string = ""
+        _len = 144
+        for index in xrange(_len-1, 5, -1):
+            inputs_dict = {}
+            test_input = 'A' * index
+            for i in xrange(256):
+                inputs_dict[s_encryption_oracle(test_input + decoded_string + chr(i))[:_len]] = chr(i)
+            try:
+                decoded_string += inputs_dict[s_encryption_oracle(test_input)[:_len]]
+            except KeyError,e :
+                pass
+    elif num == 1:
+        _len = 128
+        decoded_string = ""
+        pre_len, pre_blocks = find_prefix_length()
+        pad_len = 16 - pre_len
+        for index in xrange(_len-1, 0, -1):
+            inputs_dict = {}
+            test_input = 'A' * (index + pad_len)
+            for i in xrange(256):
+                inputs_dict[h_encryption_oracle(test_input + decoded_string + chr(i))[pre_blocks*16 : _len+pad_len]] = chr(i)
+            try:
+                decoded_string += inputs_dict[h_encryption_oracle(test_input)[pre_blocks*16 : _len+pad_len]]
+            except KeyError,e :
+                pass
     return decoded_string
 
 def admin_profile():
@@ -145,10 +175,11 @@ def main():
         detected_mode = encryption_mode_detector(cipher)
         assert mode == detected_mode
     elif sys.argv[1] == "12":
-        assert byte_at_a_time() == "Rollin' in my 5.0\nWith my rag-top down so my hair can blow\nThe girlies on standby waving just to say hi\nDid you stop? No, I just drove by\n"
+        assert byte_at_a_time(0) == "Rollin' in my 5.0\nWith my rag-top down so my hair can blow\nThe girlies on standby waving just to say hi\nDid you stop? No, I just drove by\n"
     elif sys.argv[1] == "13":
         assert admin_profile() == {'role': 'admin', 'email': 'abc@got.co.in', 'uid': '10'}
-    
+    elif sys.argv[1] == "14":
+        assert byte_at_a_time(1) == "Two roads diverged in a wood, and I-\nI took the one less traveled by,\x01"
     elif sys.argv[1] == "15":
         assert pkcs7_unpadding("ICE ICE BABY\x04\x04\x04\x04", 16) == "ICE ICE BABY"
         try:
