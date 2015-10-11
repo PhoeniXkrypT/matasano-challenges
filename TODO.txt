@@ -1,0 +1,7 @@
+SET 1
+- Automate selection process of single-byte XOR english text 
+  Challenge 6
+
+Set 2
+- Cleaner byte-at-a-time ECB
+
