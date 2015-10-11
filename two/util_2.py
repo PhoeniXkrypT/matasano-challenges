@@ -1,7 +1,10 @@
 import sys
 import base64
 import random
+import urlparse
+import urllib
 from Crypto.Cipher import AES
+from collections import OrderedDict
 
 import util_1 as util
 
@@ -70,14 +73,14 @@ def encryption_mode_detector(cipher):
 
 def byte_at_a_time(num):
     AES_KEY = '.Rm\x10o\xaae\xf3coy}\xbf\x00\xa4&'
+    pre = get_random_string(random.randrange(5,12))
 
     def s_encryption_oracle(message, blocksize=16):
         unknown_string = "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkgaGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBqdXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUgYnkK"
         modified_message = pkcs7_padding(message + base64.b64decode(unknown_string), blocksize)
         return util.AES_ECB_encrypt(modified_message, AES_KEY)
-    
+
     def h_encryption_oracle(message, blocksize=16):
-        pre = 'c\xb3\xd1\xc8CL\x0e\xf0+\xe8'
         target = 'VHdvIHJvYWRzIGRpdmVyZ2VkIGluIGEgd29vZCwgYW5kIEktCkkgdG9vayB0aGUgb25lIGxlc3MgdHJhdmVsZWQgYnks'
         modified_message = pkcs7_padding(pre + message + base64.b64decode(target), blocksize)
         return util.AES_ECB_encrypt(modified_message, AES_KEY)
@@ -92,7 +95,7 @@ def byte_at_a_time(num):
                     return None
             except IndexError,e:
                 pass
-    
+
     def find_prefix_length():
         for i in xrange(32, 48):
             enc = h_encryption_oracle('A' * i)
@@ -101,7 +104,7 @@ def byte_at_a_time(num):
                 if blocks[k] == blocks[k+1]:
                     return (48 - i), k
         return None
-    
+
     if num == 0:
         assert detect_ECB_blocksize() == 16
         decoded_string = ""
@@ -133,12 +136,7 @@ def byte_at_a_time(num):
 
 def admin_profile():
     key = get_random_string(16)
-        
-    def parsing_routine(data):
-        parsed = {}
-        for each in [pair.split('=') for pair in data.split('&')]:
-            parsed[each[0]] = each[1]
-        return parsed
+    parsing_routine = lambda data : dict(urlparse.parse_qsl(data))
 
     def profile_for(mail_id):
         if ('&' in mail_id) or ('=' in mail_id):
@@ -187,7 +185,7 @@ def main():
             assert pkcs7_unpadding("ICE ICE BABY\x01\x02\x03\x04", 16) == "Bad padding"
         except PaddingException, e:
             pass
-        
+
 
 if __name__ == '__main__':
     main()
