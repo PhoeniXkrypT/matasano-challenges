@@ -2,7 +2,6 @@ import sys
 import base64
 import random
 import urlparse
-import urllib
 from Crypto.Cipher import AES
 from collections import OrderedDict
 
