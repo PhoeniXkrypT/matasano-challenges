@@ -53,16 +53,14 @@ def CBC_padding_oracle():
 
     def padding_attack(cipher, IV, blocksize=16):
         cipher_blocks = [cipher[i:i+blocksize] for i in xrange(0, len(cipher), blocksize)]
-        message = ""
-        prev = IV
-        for each in cipher_blocks:
-            temp = attack(each, prev)
-            message += temp
-            prev = each
+        message = attack(cipher_blocks[0], IV)
+        for i in xrange(1, len(cipher_blocks)):
+            message += attack(cipher_blocks[i], cipher_blocks[i-1])
         return base64.b64decode(message)
 
     cipher, IV = random_CBC_encrypt()
     decrypted = padding_attack(cipher, IV)
+    print decrypted
     if '00000'+str(index) in decrypted:
         return 200
     else :
