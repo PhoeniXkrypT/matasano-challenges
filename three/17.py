@@ -41,10 +41,9 @@ def CBC_padding_oracle():
         position = 1
         intermediate = ""
         while position <= blocksize:
-            for val in xrange(1, 257):
-                if val == 256:
-                    return 500
-                IV = chr(0)*(blocksize-position) + chr(val) + (util_1.fixed_xor(intermediate.encode('hex'), (chr(position)*len(intermediate)).encode('hex')).decode('hex'))
+            for val in xrange(1, 256):
+                IV = chr(0)*(blocksize-position) + chr(val) + (util_1.fixed_xor(intermediate.encode('hex'), \
+                                                              (chr(position)*len(intermediate)).encode('hex')).decode('hex'))
                 if check_padding(current_block, IV):
                     intermediate = chr(ord(chr(position)) ^ ord(chr(val))) + intermediate
                     position += 1
@@ -58,8 +57,6 @@ def CBC_padding_oracle():
         prev = IV
         for each in cipher_blocks:
             temp = attack(each, prev)
-            if temp == 500:
-                return 500
             message += temp
             prev = each
         return base64.b64decode(message)
