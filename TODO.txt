@@ -6,3 +6,6 @@ Set 2
 - Cleaner byte-at-a-time ECB
   Challenge 12, 14
 
+Set 3
+- Model Challenge 17 as client-server
+
