@@ -30,11 +30,11 @@ def pkcs7_unpadding(message, blocksize):
 def AES_CBC_encrypt(message, key, IV, blocksize):
     message_blocks = [message[i:i+blocksize] for i in\
                        xrange(0, len(message), blocksize)]
-    cipher_blocks =[]
+    cipher_blocks = []
     prev_block = IV.encode('hex')
     for current_block in message_blocks:
         intermediate = util_1.fixed_xor(current_block.encode('hex'), prev_block)
-        current_cipher =util_1.AES_ECB_encrypt(intermediate.decode('hex'), key)
+        current_cipher = util_1.AES_ECB_encrypt(intermediate.decode('hex'), key)
         cipher_blocks.append(current_cipher)
         prev_block = current_cipher.encode('hex')
     return ''.join(cipher_blocks)
