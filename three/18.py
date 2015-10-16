@@ -3,9 +3,7 @@ import base64
 
 import util_1
 
-def ctr_stream(blocksize=16):
-    cipher = base64.b64decode('L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ==')
-    key = 'YELLOW SUBMARINE'
+def ctr_stream_decrypt(cipher, key, blocksize=16):
     nonce, counter = 0, 0
     message = ""
 
@@ -16,6 +14,6 @@ def ctr_stream(blocksize=16):
         counter += 1
     return message
 
-assert ctr_stream() == "Yo, VIP Let's kick it Ice, Ice, baby Ice, Ice, baby "
+assert ctr_stream_decrypt(base64.b64decode('L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPw    eyyMTJULu/6/kXX0KSvoOLSFQ=='), 'YELLOW SUBMARINE') == "Yo, VIP Let's kick it Ice, Ice, baby Ice, Ice, baby "
 
 
