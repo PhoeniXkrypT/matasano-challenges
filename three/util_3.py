@@ -1,4 +1,5 @@
 import sys
+import time
 import struct
 import base64
 import random
@@ -55,20 +56,85 @@ def CBC_padding_oracle():
     else :
         return 404
 
-def ctr_stream_decrypt(cipher, key, blocksize=16):
-    nonce, counter = 0, 0
-    message = ""
+def ctr_stream(input_string, key, nonce=0, blocksize=16):
+    counter = 0
+    out_message = ""
 
-    cipher_blocks = [cipher[i:i+blocksize] for i in xrange(0,len(cipher), blocksize)]
-    for each in cipher_blocks:
+    blocks = [input_string[i:i+blocksize] for i in xrange(0, len(input_string), blocksize)]
+    for each in blocks:
         intermediate = util_1.AES_ECB_encrypt(struct.pack("<Q", nonce) + struct.pack("<Q", counter), key)[:len(each)]
-        message += util_1.fixed_xor(each.encode('hex'), intermediate.encode('hex')).decode('hex')
+        out_message += util_1.fixed_xor(each.encode('hex'), intermediate.encode('hex')).decode('hex')
         counter += 1
-    return message
+    return out_message
 
+def _int32(x):
+    # Get the 32 least significant bits.
+    return int(0xFFFFFFFF & x)
+
+class MT19937:
+
+    def __init__(self, seed):
+        # Initialize the index to 0
+        self.index = 624
+        self.mt = [0] * 624
+        self.mt[0] = seed  # Initialize the initial state to the seed
+        for i in range(1, 624):
+            self.mt[i] = _int32(
+                1812433253 * (self.mt[i - 1] ^ self.mt[i - 1] >> 30) + i)
+
+    def extract_number(self):
+        if self.index >= 624:
+            self.twist()
+        y = self.mt[self.index]
+
+        # Right shift by 11 bits
+        y = y ^ y >> 11
+        # Shift y left by 7 and take the bitwise and of 2636928640
+        y = y ^ y << 7 & 2636928640
+        # Shift y left by 15 and take the bitwise and of y and 4022730752
+        y = y ^ y << 15 & 4022730752
+        # Right shift by 18 bits
+        y = y ^ y >> 18
+        self.index = self.index + 1
+        return _int32(y)
+
+    def twist(self):
+        for i in range(0, 624):
+            # Get the most significant bit & add it to the less significant
+            # bits of the next number
+            y = _int32((self.mt[i] & 0x80000000) +
+                       (self.mt[(i + 1) % 624] & 0x7fffffff))
+            self.mt[i] = self.mt[(i + 397) % 624] ^ y >> 1
+
+            if y % 2 != 0:
+                self.mt[i] = self.mt[i] ^ 0x9908b0df
+        self.index = 0
+
+def crack_seed(r_number):
+    current = int(time.time())
+    for i in xrange(4,15):
+        mt = MT19937(current - i)
+        if r_number == mt.extract_number() :
+            return current-i
+
+def gen_rng_unix():
+    time.sleep(random.randint(2,6))
+    seed = int(time.time())
+    rng = MT19937(seed)
+    time.sleep(random.randint(4,15))
+    return rng.extract_number(), seed
 
 def main():
     if sys.argv[1] == "17":
         assert CBC_padding_oracle() == 200
     elif sys.argv[1] == "18":
-        assert ctr_stream_decrypt(base64.b64decode('L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPw    eyyMTJULu/6/kXX0KSvoOLSFQ=='), 'YELLOW SUBMARINE') == "Yo, VIP Let's kick it Ice, Ice, baby Ice, Ice, baby "
+        assert ctr_stream(base64.b64decode('L77na/nrFsKvynd6HzOoG7GHTLXsTVu9qvY/2syLXzhPweyyMTJULu/6/kXX0KSvoOLSFQ=='), 'YELLOW SUBMARINE') == "Yo, VIP Let's kick it Ice, Ice, baby Ice, Ice, baby "
+    elif sys.argv[1] == "21":
+        m_twister = MT19937(150)
+        assert m_twister.extract_number() == 3902338276
+    elif sys.argv[1] == "22":
+        number, seed = gen_rng_unix()
+        assert crack_seed(number) == seed
+
+if __name__ == '__main__':
+    main()
