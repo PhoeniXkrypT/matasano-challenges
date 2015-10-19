@@ -1,25 +1,25 @@
 import util_3
 
 def clone_mt19937():
-    def reverse_right_shift(value, shift):
-        result, i = 0, 0
+    def reverse_right_shift(value, shift, mult=0xffffffff):
+        output, i = 0, 0
         while i * shift < 32:
-            mask = int(bin(0xffffffff << (32 - shift))[-32:], 2) >> (shift * i)
-            part = value & mask
-            value ^= part >> shift
-            result |= part
+            compartment = int(bin(0xffffffff << (32 - shift))[-32:], 2) >> (shift * i)
+            part_output = value & compartment
+            value ^= (part_output >> shift) & mult
+            output |= part_output
             i += 1
-        return result
+        return output
 
-    def reverse_left_shift(value, shift, mult):
-        result, i = 0, 0
+    def reverse_left_shift(value, shift, mult=0xffffffff):
+        output, i = 0, 0
         while i * shift < 32:
-            mask = (0xffffffff >> (32- shift)) << (shift * i)
-            part = value & mask
-            value ^= (part << shift) & mult
-            result |= part
+            compartment = int(bin((0xffffffff >> (32- shift)) << (shift * i))[-32:], 2)
+            part_output = value & compartment
+            value ^= (part_output << shift) & mult
+            output |= part_output
             i += 1
-        return result
+        return output
 
     def untemper(value):
         value = reverse_right_shift(value, 18)
@@ -28,12 +28,12 @@ def clone_mt19937():
         value = reverse_right_shift(value, 11)
         return value
 
-    def temper(y):
-        y = y ^ y >> 11
-        y = y ^ y << 7 & 2636928640
-        y = y ^ y << 15 & 4022730752
-        y = y ^ y >> 18
-        return y
+    def temper(value):
+        value = value ^ value >> 11
+        value = value ^ value << 7 & 2636928640
+        value = value ^ value << 15 & 4022730752
+        value = value ^ value >> 18
+        return value
 
     mt = util_3.MT19937(15015)
     rand_numbers, states = [], []
@@ -41,9 +41,6 @@ def clone_mt19937():
         rand_numbers.append(mt.extract_number())
     for each in rand_numbers:
         states.append(untemper(each))
-    for i in xrange(len(states)):
-        if temper(states[i]) != rand_numbers[i]:
-            return 0
-    return 1
+    return [1 for i in xrange(len(states)) if temper(states[i]) != rand_numbers[i]]
 
-assert clone_mt19937() == 1
+assert clone_mt19937() == []
