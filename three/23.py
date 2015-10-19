@@ -36,13 +36,13 @@ def clone_mt19937():
         return y
 
     mt = util_3.MT19937(15015)
-    rngs, states = [], []
+    rand_numbers, states = [], []
     for i in xrange(624):
-        rngs.append(mt.extract_number())
-    for each in rngs:
+        rand_numbers.append(mt.extract_number())
+    for each in rand_numbers:
         states.append(untemper(each))
     for i in xrange(len(states)):
-        if temper(states[i]) != rngs[i]:
+        if temper(states[i]) != rand_numbers[i]:
             return 0
     return 1
 
