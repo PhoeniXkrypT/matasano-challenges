@@ -1,4 +1,4 @@
-import temp
+import util_3
 
 def clone_mt19937():
     def reverse_right_shift(value, shift):
@@ -35,7 +35,7 @@ def clone_mt19937():
         y = y ^ y >> 18
         return y
 
-    mt = temp.MT19937(15015)
+    mt = util_3.MT19937(15015)
     rngs, states = [], []
     for i in xrange(624):
         rngs.append(mt.extract_number())
