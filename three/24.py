@@ -2,7 +2,7 @@ import util_3
 import random
 import time
 
-def encrypt(message, seed):
+def mt19937_encrypt(message, seed):
     mt = util_3.MT19937(seed)
     enc = ""
     for each in message:
@@ -10,12 +10,23 @@ def encrypt(message, seed):
     return enc.encode('hex')
 
 def recover_key(data, cipher):
-    return [each for each in xrange(32768, 65535) if (encrypt(data, each)) == cipher][0]
+    return [each for each in xrange(32768, 65535) if (mt19937_encrypt(data, each)) == cipher][0]
+
+def generate_password_token(seed):
+    mt = util_3.MT19937(seed)
+    return mt.extract_number()
+
+def crack_password_token(token):
+    current_time = int(time.time())
+    for i in xrange(50):
+        mt = util_3.MT19937(current_time-i)
+        if mt.extract_number() == token:
+            return current_time - i
 
 data = ''.join([chr(random.randint(1,255)) for _ in xrange(random.randint(3,16))]) + ('A' * 14)
 seed = random.randint(32768,65535)
-cipher = encrypt(data,seed)
+cipher = mt19937_encrypt(data,seed)
 assert recover_key(data, cipher) == seed
 seed = int(time.time())
-data = ''.join([chr(random.randint(1,255)) for _ in xrange(6)])
-token = encrypt(data, seed)
+token = generate_password_token(seed)
+assert crack_password_token(token) == seed
