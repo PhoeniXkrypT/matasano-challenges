@@ -4,10 +4,7 @@ import time
 
 def mt19937_encrypt(message, seed):
     mt = util_3.MT19937(seed)
-    enc = ""
-    for each in message:
-        enc += chr(ord(each) ^ (mt.extract_number() & 0xff))
-    return enc.encode('hex')
+    return ''.join([chr(ord(each) ^ (mt.extract_number() & 0xff)) for each in message])
 
 def recover_key(data, cipher):
     return [each for each in xrange(32768, 65535) if (mt19937_encrypt(data, each)) == cipher][0]
