@@ -73,19 +73,16 @@ class SHA1(object):
     def _handle(self, chunk):
         lrot = lambda x, n: (x << n) | (x >> (32 - n))
         w = []
-
         for j in range(len(chunk) // 32):
             w.append(int(chunk[j * 32:j * 32 + 32], 2))
         for i in range(16, 80):
             w.append(lrot(w[i - 3] ^ w[i - 8] ^ w[i - 14] ^ w[i - 16], 1)
                 & 0xffffffff)
-
         a = self._h0
         b = self._h1
         c = self._h2
         d = self._h3
         e = self._h4
-
         for i in range(80):
             if i <= i <= 19:
                 f, k = d ^ (b & (c ^ d)), 0x5a827999
@@ -97,7 +94,6 @@ class SHA1(object):
                 f, k = b ^ c ^ d, 0xca62c1d6
             temp = lrot(a, 5) + f + e + k + w[i] & 0xffffffff
             a, b, c, d, e = temp, a, lrot(b, 30), c, d
-
         self._h0 = (self._h0 + a) & 0xffffffff
         self._h1 = (self._h1 + b) & 0xffffffff
         self._h2 = (self._h2 + c) & 0xffffffff
