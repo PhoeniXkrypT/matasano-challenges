@@ -9,3 +9,6 @@ Set 2
 Set 3
 - Model Challenge 17 as client-server
 - Challenges 19 and 20
+
+Set 4
+- Challenge 27, recover plaintext from error
