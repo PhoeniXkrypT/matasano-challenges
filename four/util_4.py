@@ -1,4 +1,7 @@
 import sys
+from hashlib import sha1
+
+import util_1
 import util_2
 import util_3
 
@@ -37,6 +40,36 @@ def ctr_bitflipping_attack():
                 return True
     return False
 
+def cbc_key_as_iv():
+    blocksize = 16
+    key = util_2.get_random_string(blocksize)
+
+    def recover_key(cipher):
+        new_cipher = cipher[:16] + '\x00'*blocksize + cipher[:16] + cipher[48:]
+        msg = util_2.pkcs7_unpadding(util_2.AES_CBC_decrypt(new_cipher, key, key, blocksize), blocksize)
+        return util_1.fixed_xor(msg[:16].encode('hex'), msg[32:48].encode('hex')).decode('hex')
+
+    message = "comment1=cooking%20MCs;userdata=testuser;comment2=%20like%20a%20pound%20of%20bacon"
+    cipher = util_2.AES_CBC_encrypt(util_2.pkcs7_padding(message, blocksize), key, key, blocksize)
+    recovered_key = recover_key(cipher)
+    return (key == recovered_key)
+
+def sha1_authentication(key, message):
+    return sha1(key + message).hexdigest()
+
+def tamper(key, message, mac):
+    for i, each in enumerate(message):
+        new_message = message[:i] + chr(ord(each) + 1) + message[i:]
+    if sha1(key + new_message).hexdigest() == mac:
+        return True
+    return False
+
+def reproduce(message, mac):
+    for _ in xrange(5000):
+        if sha1(util_2.get_random_string(16) + message) == mac:
+            return True
+    return False
+
 def main():
     try:
         if sys.argv[1] == "25":
@@ -45,6 +78,14 @@ def main():
             assert break_read_write_ctr(cipher) == plaintext
         elif sys.argv[1] == "26":
             assert ctr_bitflipping_attack() == True
+        elif sys.argv[1] == "27":
+            assert cbc_key_as_iv() == True
+        elif sys.argv[1] = "28":
+            message = 'A' * 15
+            key = util_2.get_random_string(16)
+            mac = sha1_authentication(key, message)
+            assert tamper(key, message, mac) == False
+            assert reproduce(message, mac) == False
         else:
             raise ArgumentError("Give argument between 25 and 32")
     except ArgumentError, e:
