@@ -9,7 +9,7 @@ def cbc_key_as_iv():
     key = util_2.get_random_string(blocksize)
 
     def recover_key(cipher):
-        new_cipher = cipher[:16] + '\x00'*blocksize + cipher[:16] + cipher[48:]
+        new_cipher = cipher[:16] + '\x00' * blocksize + cipher[:16] + cipher[48:]
         msg = util_2.pkcs7_unpadding(util_2.AES_CBC_decrypt(new_cipher, key, key, blocksize), blocksize)
         if not(all(each in string.printable for each in msg)):
             return util_1.fixed_xor(msg[:16].encode('hex'), msg[32:48].encode('hex')).decode('hex')
