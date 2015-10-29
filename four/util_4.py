@@ -60,8 +60,8 @@ def sha1_authentication(key, message):
 def tamper(key, message, mac):
     for i, each in enumerate(message):
         new_message = message[:i] + chr(ord(each) + 1) + message[i:]
-    if sha1(key + new_message).hexdigest() == mac:
-        return True
+        if sha1(key + new_message).hexdigest() == mac:
+            return True
     return False
 
 def reproduce(message, mac):
@@ -80,9 +80,8 @@ def main():
             assert ctr_bitflipping_attack() == True
         elif sys.argv[1] == "27":
             assert cbc_key_as_iv() == True
-        elif sys.argv[1] = "28":
-            message = 'A' * 15
-            key = util_2.get_random_string(16)
+        elif sys.argv[1] == "28":
+            message, key = 'A' * 15, util_2.get_random_string(16)
             mac = sha1_authentication(key, message)
             assert tamper(key, message, mac) == False
             assert reproduce(message, mac) == False
