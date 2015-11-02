@@ -57,13 +57,13 @@ def cbc_key_as_iv():
     return (key == recover_key(cipher))
 
 class SHA1(object):
-    _h0, _h1, _h2, _h3, _h4, = (
-        0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476, 0xc3d2e1f0)
 
-    def __init__(self, message):
-        length = bin(len(message) * 8)[2:].rjust(64, "0")
+    def __init__(self, message, msg_len, _h0=0x67452301, _h1=0xefcdab89, _h2=0x98badcfe, _h3=0x10325476, _h4=0xc3d2e1f0):
+        self._h0,self._h1, self._h2, self._h3, self._h4 = _h0, _h1, _h2, _h3, _h4
+
+        length = bin((msg_len) * 8)[2:].rjust(64, "0")
         while len(message) > 64:
-            self._handle(''.join(bin(i)[2:].rjust(8, "0")
+            self._handle(''.join(bin(ord(i))[2:].rjust(8, "0")
                 for i in message[:64]))
             message = message[64:]
         message = ''.join(bin(ord(i))[2:].rjust(8, "0") for i in message) + "1"
@@ -114,20 +114,50 @@ class SHA1(object):
             for i in range(len(hexdigest) // 2))
 
 def sha1_authentication(key, message):
-    return SHA1(key + message).hexdigest()
+    return SHA1(key + message, len(key + message)).hexdigest()
 
 def tamper(key, message, mac):
     for i, each in enumerate(message):
         new_message = message[:i] + chr(ord(each) + 1) + message[i:]
-        if SHA1(key + new_message).hexdigest() == mac:
+        if SHA1(key + new_message, len(key + new_message)).hexdigest() == mac:
             return True
     return False
 
 def reproduce(message, mac):
     for _ in xrange(5000):
-        if SHA1(util_2.get_random_string(16) + message) == mac:
+        if SHA1(util_2.get_random_string(16) + message, 16 + len(message)) == mac:
             return True
     return False
+
+def sha1_hash_length_extension():
+    key = util_2.get_random_string(16)
+
+    def sha_glue_padding(message_length):
+        length = bin(message_length * 8)[2:].rjust(64,"0")
+        msg_remains = ((message_length % 64) * 8) + 1
+        return ("1" + "0" * ((448 - msg_remains % 512) % 512) + length)
+
+    def attack(message, mac):
+        mac_chunk = [int(mac[i:i+8],16) for i in xrange(0, len(mac), 8)]
+        new_msg = ";admin=true"
+        keylength = 1
+        while True:
+            message_length = len(message) + keylength
+            glue_padding = sha_glue_padding(message_length)
+            glue_padding = ''.join([chr(int(glue_padding[i:i+8], 2)) for i in xrange(0, len(glue_padding), 8)])
+            new_mac = SHA1(new_msg, message_length+len(glue_padding)+len(new_msg), mac_chunk[0], \
+                           mac_chunk[1], mac_chunk[2], mac_chunk[3], mac_chunk[4]).hexdigest()
+            if sha_sign(message + glue_padding + new_msg) == new_mac:
+                return True
+            keylength+=1
+        return False
+
+    def sha_sign(message):
+        return SHA1(key + message, len(key+message)).hexdigest()
+
+    message = "comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20bacon"
+    mac = sha_sign(message)
+    return attack(message, mac)
 
 def main():
     try:
@@ -144,6 +174,8 @@ def main():
             mac = sha1_authentication(key, message)
             assert tamper(key, message, mac) == False
             assert reproduce(message, mac) == False
+        elif sys.argv[1] == "29":
+            assert sha1_hash_length_extension() == True
         else:
             raise ArgumentError("Give argument between 25 and 32")
     except ArgumentError, e:

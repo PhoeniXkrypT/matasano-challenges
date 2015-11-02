@@ -1,7 +1,9 @@
 class SHA1(object):
 
-    def __init__(self, message, length, _h0=0x67452301, _h1=0xefcdab89, _h2=0x98badcfe, _h3=0x10325476, _h4=0xc3d2e1f0):
+    def __init__(self, message, msg_len, _h0=0x67452301, _h1=0xefcdab89, _h2=0x98badcfe, _h3=0x10325476, _h4=0xc3d2e1f0):
         self._h0,self._h1, self._h2, self._h3, self._h4 = _h0, _h1, _h2, _h3, _h4 
+        
+        length = bin((msg_len) * 8)[2:].rjust(64, "0")
         while len(message) > 64:
             self._handle(''.join(bin(ord(i))[2:].rjust(8, "0")
                 for i in message[:64]))
