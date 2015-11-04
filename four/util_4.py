@@ -1,6 +1,6 @@
 import sys
-
-from hashlib import sha1
+import struct
+import string
 
 import util_1
 import util_2
@@ -129,9 +129,11 @@ def reproduce(message, mac):
             return True
     return False
 
-def sha1_hash_length_extension():
+def sha1_length_extension():
     key = util_2.get_random_string(16)
-
+    def sha_sign(message):
+        return SHA1(key + message, len(key+message)).hexdigest()
+        
     def sha_glue_padding(message_length):
         length = bin(message_length * 8)[2:].rjust(64,"0")
         msg_remains = ((message_length % 64) * 8) + 1
@@ -145,18 +147,111 @@ def sha1_hash_length_extension():
             message_length = len(message) + keylength
             glue_padding = sha_glue_padding(message_length)
             glue_padding = ''.join([chr(int(glue_padding[i:i+8], 2)) for i in xrange(0, len(glue_padding), 8)])
-            new_mac = SHA1(new_msg, message_length+len(glue_padding)+len(new_msg), mac_chunk[0], \
+            new_mac = SHA1(new_msg, message_length + len(glue_padding + new_msg), mac_chunk[0], \
                            mac_chunk[1], mac_chunk[2], mac_chunk[3], mac_chunk[4]).hexdigest()
             if sha_sign(message + glue_padding + new_msg) == new_mac:
                 return True
             keylength+=1
         return False
 
-    def sha_sign(message):
-        return SHA1(key + message, len(key+message)).hexdigest()
-
     message = "comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20bacon"
     mac = sha_sign(message)
+    return attack(message, mac)
+
+def leftrotate(i, n):
+    return ((i << n) & 0xffffffff) | (i >> (32 - n))
+
+def F(x,y,z):
+    return (x & y) | (~x & z)
+
+def G(x,y,z):
+    return (x & y) | (x & z) | (y & z)
+
+def H(x,y,z):
+    return x ^ y ^ z
+
+class MD4(object):
+    def __init__(self, h=[0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476], _len=0, data=""):
+        self.remainder = data
+        self.count = 0
+        if _len:
+            self.h = h
+        else:
+            self.h = [0x67452301, 0xefcdab89, 0x98badcfe, 0x10325476]
+        self._len = _len
+
+    def _add_chunk(self, chunk):
+        self.count += 1
+        X = list(struct.unpack("<16I", chunk) + (None,) * (80-16))
+        h = [x for x in self.h]
+        # Round 1
+        s = (3, 7, 11, 19)
+        for r in xrange(16):
+            i = (16 - r) % 4
+            k = r
+            h[i] = leftrotate((h[i] + F(h[(i + 1) % 4], h[(i + 2) % 4], h[(i + 3) % 4]) + X[k]) % 2**32, s[r % 4])
+        # Round 2
+        s = (3, 5, 9, 13)
+        for r in xrange(16):
+            i = (16 - r) % 4
+            k = 4 * (r % 4) + r // 4
+            h[i] = leftrotate((h[i] + G(h[(i + 1) % 4], h[(i + 2) % 4], h[(i + 3) % 4]) + X[k] + 0x5a827999) % 2**32, s[r % 4])
+        # Round 3
+        s = (3, 9, 11, 15)
+        k = (0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15) #wish I could function
+        for r in xrange(16):
+            i = (16 - r) % 4
+            h[i] = leftrotate((h[i] + H(h[(i + 1) % 4], h[(i + 2) % 4], h[(i + 3) % 4]) + X[k[r]] + 0x6ed9eba1) % 2**32, s[r % 4])
+
+        for i,v in enumerate(h):
+            self.h[i] = (v + self.h[i]) % 2**32
+
+    def add(self, data):
+        message = self.remainder + data
+        r = len(message) % 64
+        if r != 0:
+            self.remainder = message[-r:]
+        else:
+            self.remainder = ""
+        for chunk in xrange(0, len(message)-r, 64):
+            self._add_chunk( message[chunk:chunk + 64] )
+        return self
+
+    def finish(self):
+        if self._len:
+            self.count = int(self._len/64)
+        l = len(self.remainder) + 64 * self.count
+        self.add("\x80" + "\x00" * ((55 - l) % 64) + struct.pack("<Q", l * 8))
+        out = struct.pack("<4I", *self.h)
+        return out
+        
+def md4_length_extension():
+    key = util_2.get_random_string(16)
+    def md4_sign(message):
+        md = MD4()
+        md.add(key + message)
+        return md.finish().encode('hex')
+
+    def md4_glue_padding(message_length):
+        l = (message_length % 64) + 64 * int(message_length/64)
+        return ("\x80" + "\x00" * ((55 - l) % 64) + struct.pack("<Q", l * 8))
+
+    def attack(message, mac):
+        new_msg = ";admin=true"
+        keylength = 1
+        while True:
+            message_length = len(message) + keylength
+            glue_padding = md4_glue_padding(message_length)
+            md_modified = MD4(list(struct.unpack("<4I",mac.decode('hex'))), message_length + len(glue_padding + new_msg))
+            md_modified.add(new_msg)
+            new_mac = md_modified.finish().encode('hex')
+            if md4_sign(message + glue_padding + new_msg) == new_mac:
+                return True
+            keylength += 1
+        return False
+
+    message = "comment1=cooking%20MCs;userdata=foo;comment2=%20like%20a%20pound%20of%20bacon"
+    mac = md4_sign(message)
     return attack(message, mac)
 
 def main():
@@ -175,7 +270,9 @@ def main():
             assert tamper(key, message, mac) == False
             assert reproduce(message, mac) == False
         elif sys.argv[1] == "29":
-            assert sha1_hash_length_extension() == True
+            assert sha1_length_extension() == True
+        elif sys.argv[1] == "30":
+            assert md4_length_extension() == True
         else:
             raise ArgumentError("Give argument between 25 and 32")
     except ArgumentError, e:
