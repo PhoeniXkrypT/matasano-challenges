@@ -125,7 +125,7 @@ def tamper(key, message, mac):
 
 def reproduce(message, mac):
     for _ in xrange(5000):
-        if SHA1(util_2.get_random_string(16) + message, 16 + len(message)) == mac:
+        if SHA1(util_2.get_random_string(16) + message, 16 + len(message)).hexdigest() == mac:
             return True
     return False
 
