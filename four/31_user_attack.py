@@ -40,8 +40,9 @@ def send_file_sig(filename, signature):
 def main():
     mac, filename = user()
     assert send_file_sig(filename, mac) == 200
-    t = attack(filename)
-    assert t == mac
+    print [each for each in mac.decode('hex')]
+    cracked_mac = attack(filename)
+    assert cracked_mac == mac
 
 if __name__ == '__main__':
     main()

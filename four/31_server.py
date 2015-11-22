@@ -12,12 +12,14 @@ class index:
         url = web.url()
         filename = url[url.rfind('/file=')+6 : url.rfind('&')]
         signature = url[url.rfind('signature=')+10 : ]
-        if not(self.server_check(filename, signature)):
-            self.send_response(500)
+        try :
+            if not(self.server_check(filename, signature)):
+                self.send_response(500)
+        except AttributeError, e:
+            pass
         return 
     
-    def hmac_sha1(self, message, blocksize=64):
-        key = 'A' * 16
+    def hmac_sha1(self, key, message, blocksize=64):
         if len(key) > blocksize:
             key = util_4.SHA1(key, len(key)).hexdigest()
         key = key.ljust(blocksize, '\x00')
@@ -27,7 +29,8 @@ class index:
         return util_4.SHA1(o_key_pad + intermediate, len(o_key_pad + intermediate)).hexdigest()
 
     def server_check(self, filename, signature):
-        file_mac = self.hmac_sha1(filename)
+        key = 'A' * 16
+        file_mac = self.hmac_sha1(key, filename)
         return self.insecure_compare(signature.decode('hex'), file_mac.decode('hex'))
 
     def insecure_compare(self, signature, file_mac):
