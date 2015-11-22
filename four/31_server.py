@@ -12,11 +12,8 @@ class index:
         url = web.url()
         filename = url[url.rfind('/file=')+6 : url.rfind('&')]
         signature = url[url.rfind('signature=')+10 : ]
-        try :
-            if not(self.server_check(filename, signature)):
-                self.send_response(500)
-        except AttributeError, e:
-            pass
+        if not(self.server_check(filename, signature)):
+            self.send_response(500)
         return 
     
     def hmac_sha1(self, key, message, blocksize=64):

@@ -29,7 +29,6 @@ def attack(filename):
             send_file_sig(filename, ''.join(temp).encode('hex'))
             timings[int((time.time()-start) * 1000)] = j
         signature_crack[i] = chr(timings[max(timings)])
-        print [chr(timings[max(timings)])]
     return ''.join(signature_crack).encode('hex')
 
 def send_file_sig(filename, signature):
@@ -40,7 +39,6 @@ def send_file_sig(filename, signature):
 def main():
     mac, filename = user()
     assert send_file_sig(filename, mac) == 200
-    print [each for each in mac.decode('hex')]
     cracked_mac = attack(filename)
     assert cracked_mac == mac
 
