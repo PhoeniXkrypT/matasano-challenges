@@ -5,32 +5,20 @@ p = "ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b1
 p = int(p, 16)
 g = 2
 
-class user1(object):
+class user(object):
     global p, g
     def __init__(self):
-        self.a = random.randint(20, 100) % p
+        self.var = random.randint(20, 100) % p
 
-    def send(self):
-        return pow(g, self.a, p)
+    def public_value(self):
+        return pow(g, self.var, p)
 
-    def secret(self, B):
-        s = pow(B, self.a, p)
+    def get_common_secret(self, pub):
+        s = pow(pub, self.var, p)
         return sha256(str(s)).hexdigest()
 
-class user2(object):
-    global p, g
-    def __init__(self):
-        self.b = random.randint(20, 100) % p
-
-    def send(self):
-        return pow(g, self.b, p)
-
-    def secret(self, A):
-        s = pow(A, self.b, p)
-        return sha256(str(s)).hexdigest()
-
-user_1 = user1()
-A = user_1.send()
-user_2 = user2()
-B = user_2.send()
-assert user_1.secret(B) == user_2.secret(A)
+user1 = user()
+A = user1.public_value()
+user2 = user()
+B = user2.public_value()
+assert user1.get_common_secret(B) == user2.get_common_secret(A)
