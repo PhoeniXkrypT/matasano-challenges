@@ -7,7 +7,7 @@ p = "ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b1
 p = int(p, 16)
 g = 2
 
-class user(object):
+class dh_user(object):
     global p, g
     def __init__(self):
         self.var = random.randint(20, 100) % p
@@ -35,12 +35,15 @@ class Send_Receive():
         sha_s = util_4.SHA1(s, len(s)).hexdigest()
         return util_2.pkcs7_unpadding(util_2.AES_CBC_decrypt(self.msg[0:-16], sha_s[0:16], self.msg[-16:], self.blocksize), self.blocksize)
 
-user1 = user()
-A = user1.public_value()
-user2 = user()
-B = user2.public_value()
-assert user1.get_common_secret(B) == user2.get_common_secret(A)
+def main():
+    # protocol without MITM
+    user1 = dh_user()
+    A = user1.public_value()
+    user2 = dh_user()
+    B = user2.public_value()
+    sa = Send_Receive(user1.get_common_secret(B), "test message").send()
+    sb = Send_Receive(user2.get_common_secret(A), sa).receive()
+    assert sb == "test message"
 
-sa = Send_Receive(user1.get_common_secret(B), "test message").send()
-sb = Send_Receive(user2.get_common_secret(A), sa).receive()
-assert sb == "test message"
+if __name__ == '__main__':
+    main()
