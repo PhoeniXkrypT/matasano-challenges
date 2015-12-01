@@ -12,3 +12,4 @@ Set 3
 
 Set 4
 - Challenge 27, recover plaintext from error
+- Challenge 32, modify 31
