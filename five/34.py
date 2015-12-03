@@ -35,15 +35,32 @@ class Send_Receive():
         sha_s = util_4.SHA1(s, len(s)).hexdigest()
         return util_2.pkcs7_unpadding(util_2.AES_CBC_decrypt(self.msg[0:-16], sha_s[0:16], self.msg[-16:], self.blocksize), self.blocksize)
 
-def main():
+
+def attack():
     # protocol without MITM
     user1 = dh_user()
     A = user1.public_value()
     user2 = dh_user()
     B = user2.public_value()
-    sa = Send_Receive(user1.get_common_secret(B), "test message").send()
-    sb = Send_Receive(user2.get_common_secret(A), sa).receive()
-    assert sb == "test message"
 
-if __name__ == '__main__':
-    main()
+    sa = user1.get_common_secret(p)
+    sb = user2.get_common_secret(p)
+
+    # A --> M
+    a_msg = Send_Receive(sa, "test message").send()
+    # at M
+    sm = '0'
+    decoded_a_msg = Send_Receive(sm, a_msg).receive()
+    # M --> B
+    a_msg_b = Send_Receive(sb, a_msg).receive()
+    assert a_msg_b == "test message"
+
+    # B --> M
+    b_msg = Send_Receive(sb, "replay msg").send()
+    # at M
+    decoded_b_msg = Send_Receive(sm, b_msg).receive()
+    # M --> A
+    b_msg_a = Send_Receive(sa, b_msg).receive()
+    assert b_msg_a == "replay msg"
+
+attack()
