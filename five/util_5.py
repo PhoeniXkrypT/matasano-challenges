@@ -69,6 +69,8 @@ def g_attack(user1, user2):
     
     if (A == B):
         sm = A
+    else:
+        sm = 1
     # at A
     a_msg = SendReceive(sa, "test message").send()
     # at M
@@ -93,15 +95,10 @@ def main():
         elif sys.argv[1] == "34":
             assert mitm_attack() == True
         elif sys.argv[1] == "35":
-            user1 = dh_user(1)
-            user2 = dh_user(1)
-            assert g_attack(user1, user2)
-            user1 = dh_user(p)
-            user2 = dh_user(p)
-            assert g_attack(user1, user2)
-            user1 = dh_user(p-1)
-            user2 = dh_user(p-1)
-            assert g_attack(user1, user2)
+            for each in [1, p, (p-1)]:
+                user1 = dh_user(each)
+                user2 = dh_user(each)
+                assert g_attack(user1, user2)
         else:
             raise util_4.ArgumentError("Give argument between 33 and 40")
     except util_4.ArgumentError, e:
