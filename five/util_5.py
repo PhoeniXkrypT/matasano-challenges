@@ -20,7 +20,7 @@ class dh_user(object):
     def get_common_secret(self, pub):
         return pow(pub, self.var, p)
 
-class Send_Receive():
+class SendReceive():
     def __init__(self, key, msg):
         self.msg = msg
         self.key = key
@@ -47,18 +47,18 @@ def mitm_attack():
     sb = user2.get_common_secret(p)
 
     # A --> M
-    a_msg = Send_Receive(sa, "test message").send()
+    a_msg = SendReceive(sa, "test message").send()
     # at M
     sm = '0'
-    decoded_a_msg = Send_Receive(sm, a_msg).receive()
+    decoded_a_msg = SendReceive(sm, a_msg).receive()
     # M --> B
-    a_msg_b = Send_Receive(sb, a_msg).receive()
+    a_msg_b = SendReceive(sb, a_msg).receive()
     # B --> M
-    b_msg = Send_Receive(sb, "replay msg").send()
+    b_msg = SendReceive(sb, "replay msg").send()
     # at M
-    decoded_b_msg = Send_Receive(sm, b_msg).receive()
+    decoded_b_msg = SendReceive(sm, b_msg).receive()
     # M --> A
-    b_msg_a = Send_Receive(sa, b_msg).receive()
+    b_msg_a = SendReceive(sa, b_msg).receive()
     return (b_msg_a == "replay msg") and (a_msg_b == "test message")
 
 def g_attack(user1, user2, sm):
@@ -67,16 +67,16 @@ def g_attack(user1, user2, sm):
     sa = user1.get_common_secret(B)
     sb = user2.get_common_secret(A)
     # at A
-    a_msg = Send_Receive(sa, "test message").send()
+    a_msg = SendReceive(sa, "test message").send()
     # at M
-    decoded_a_msg = Send_Receive(sm, a_msg).receive()
+    decoded_a_msg = SendReceive(sm, a_msg).receive()
     # at B
-    a_msg_b = Send_Receive(sb, a_msg).receive()
-    b_msg = Send_Receive(sb, a_msg_b).send()
+    a_msg_b = SendReceive(sb, a_msg).receive()
+    b_msg = SendReceive(sb, a_msg_b).send()
     # at M
-    decoded_b_msg = Send_Receive(sm, b_msg).receive()
+    decoded_b_msg = SendReceive(sm, b_msg).receive()
     # at A
-    b_msg_a = Send_Receive(sa, b_msg).receive()
+    b_msg_a = SendReceive(sa, b_msg).receive()
     return (b_msg_a == "test message")
 
 def main():
