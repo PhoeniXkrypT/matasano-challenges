@@ -61,11 +61,14 @@ def mitm_attack():
     b_msg_a = SendReceive(sa, b_msg).receive()
     return (b_msg_a == "replay msg") and (a_msg_b == "test message")
 
-def g_attack(user1, user2, sm):
+def g_attack(user1, user2):
     A = user1.public_value()
     B = user2.public_value()
     sa = user1.get_common_secret(B)
     sb = user2.get_common_secret(A)
+    
+    if (A == B):
+        sm = A
     # at A
     a_msg = SendReceive(sa, "test message").send()
     # at M
@@ -92,13 +95,13 @@ def main():
         elif sys.argv[1] == "35":
             user1 = dh_user(1)
             user2 = dh_user(1)
-            assert g_attack(user1, user2, '1')
+            assert g_attack(user1, user2)
             user1 = dh_user(p)
             user2 = dh_user(p)
-            assert g_attack(user1, user2, '0')
+            assert g_attack(user1, user2)
             user1 = dh_user(p-1)
             user2 = dh_user(p-1)
-            assert g_attack(user1, user2, '1')
+            assert g_attack(user1, user2)
         else:
             raise util_4.ArgumentError("Give argument between 33 and 40")
     except util_4.ArgumentError, e:
