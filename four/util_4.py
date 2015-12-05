@@ -133,7 +133,7 @@ def sha1_length_extension():
     key = util_2.get_random_string(16)
     def sha_sign(message):
         return SHA1(key + message, len(key+message)).hexdigest()
-        
+
     def sha_glue_padding(message_length):
         length = bin(message_length * 8)[2:].rjust(64,"0")
         msg_remains = ((message_length % 64) * 8) + 1
@@ -277,6 +277,8 @@ def main():
             raise ArgumentError("Give argument between 25 and 32")
     except ArgumentError, e:
         print e
+    except IndexError, e:
+        print "Error : Follow format util_4.py <question_number>"
 
 if __name__ == '__main__':
     main()

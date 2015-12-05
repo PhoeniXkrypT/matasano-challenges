@@ -277,6 +277,8 @@ def main():
             raise ArgumentError("Give argument between 25 and 32")
     except ArgumentError, e:
         print e
+    except IndexError, e:
+        print "Error : Follow format util_4.py <question_number>"
 
 if __name__ == '__main__':
     main()

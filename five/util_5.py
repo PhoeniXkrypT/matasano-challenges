@@ -41,17 +41,17 @@ def mitm_attack(user1, user2, temp):
     A = user1.public_value()
     B = user2.public_value()
     if temp == '1':
+        global p
         sa = user1.get_common_secret(p)
         sb = user2.get_common_secret(p)
         sm = '0'
     elif temp == '2':
         sa = user1.get_common_secret(B)
         sb = user2.get_common_secret(A)
-        if (A == B):
+        if (A == B): # a and b are either odd or even
             sm = A
         else:
             sm = 1
-
     # at A
     a_msg = SendReceive(sa, "test message").send()
     # at M
@@ -86,6 +86,8 @@ def main():
             raise util_4.ArgumentError("Give argument between 33 and 40")
     except util_4.ArgumentError, e:
         print e
+    except IndexError, e:
+        print "Error : Follow format util_5.py <question_number>"
 
 if __name__ == '__main__':
     main()
