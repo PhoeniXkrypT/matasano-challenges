@@ -8,7 +8,7 @@ import util_4
 p = "ffffffffffffffffc90fdaa22168c234c4c6628b80dc1cd129024e088a67cc74020bbea63b139b22514a08798e3404ddef9519b3cd3a431b302b0a6df25f14374fe1356d6d51c245e485b576625e7ec6f44c42e9a637ed6b0bff5cb6f406b7edee386bfb5a899fa5ae9f24117c4b1fe649286651ece45b3dc2007cb8a163bf0598da48361c55d39a69163fa8fd24cf5f83655d23dca3ad961c62f356208552bb9ed529077096966d670c354e4abc9804f1746c08ca237327ffffffffffffffff"
 p = int(p, 16)
 
-class dh_user(object):
+class DHUser(object):
     global p
     def __init__(self, g=2):
         self.var = random.randint(20, 100) % p
@@ -68,19 +68,19 @@ def mitm_attack(user1, user2, temp):
 def main():
     try:
         if sys.argv[1] == "33":
-            user1 = dh_user()
+            user1 = DHUser()
             A = user1.public_value()
-            user2 = dh_user()
+            user2 = DHUser()
             B = user2.public_value()
             assert sha256(str(user1.get_common_secret(B))).hexdigest() == sha256(str(user2.get_common_secret(A))).hexdigest()
         elif sys.argv[1] == "34":
-            user1 = dh_user()
-            user2 = dh_user()
+            user1 = DHUser()
+            user2 = DHUser()
             assert mitm_attack(user1, user2, '1') == True
         elif sys.argv[1] == "35":
             for each in [1, p, (p-1)]:
-                user1 = dh_user(each)
-                user2 = dh_user(each)
+                user1 = DHUser(each)
+                user2 = DHUser(each)
                 assert mitm_attack(user1, user2, '2') == True
         else:
             raise util_4.ArgumentError("Give argument between 33 and 40")
