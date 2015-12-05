@@ -37,40 +37,21 @@ class SendReceive():
         sha_s = util_4.SHA1(s, len(s)).hexdigest()
         return util_2.pkcs7_unpadding(util_2.AES_CBC_decrypt(self.msg[0:-16], sha_s[0:16], self.msg[-16:], self.blocksize), self.blocksize)
 
-def mitm_attack():
-    # protocol without MITM
-    user1 = dh_user()
-    A = user1.public_value()
-    user2 = dh_user()
-    B = user2.public_value()
-    sa = user1.get_common_secret(p)
-    sb = user2.get_common_secret(p)
-
-    # A --> M
-    a_msg = SendReceive(sa, "test message").send()
-    # at M
-    sm = '0'
-    decoded_a_msg = SendReceive(sm, a_msg).receive()
-    # M --> B
-    a_msg_b = SendReceive(sb, a_msg).receive()
-    # B --> M
-    b_msg = SendReceive(sb, "replay msg").send()
-    # at M
-    decoded_b_msg = SendReceive(sm, b_msg).receive()
-    # M --> A
-    b_msg_a = SendReceive(sa, b_msg).receive()
-    return (b_msg_a == "replay msg") and (a_msg_b == "test message")
-
-def g_attack(user1, user2):
+def mitm_attack(user1, user2, temp):
     A = user1.public_value()
     B = user2.public_value()
-    sa = user1.get_common_secret(B)
-    sb = user2.get_common_secret(A)
-    
-    if (A == B):
-        sm = A
-    else:
-        sm = 1
+    if temp == '1':
+        sa = user1.get_common_secret(p)
+        sb = user2.get_common_secret(p)
+        sm = '0'
+    elif temp == '2':
+        sa = user1.get_common_secret(B)
+        sb = user2.get_common_secret(A)
+        if (A == B):
+            sm = A
+        else:
+            sm = 1
+
     # at A
     a_msg = SendReceive(sa, "test message").send()
     # at M
@@ -93,12 +74,14 @@ def main():
             B = user2.public_value()
             assert sha256(str(user1.get_common_secret(B))).hexdigest() == sha256(str(user2.get_common_secret(A))).hexdigest()
         elif sys.argv[1] == "34":
-            assert mitm_attack() == True
+            user1 = dh_user()
+            user2 = dh_user()
+            assert mitm_attack(user1, user2, '1') == True
         elif sys.argv[1] == "35":
             for each in [1, p, (p-1)]:
                 user1 = dh_user(each)
                 user2 = dh_user(each)
-                assert g_attack(user1, user2)
+                assert mitm_attack(user1, user2, '2') == True
         else:
             raise util_4.ArgumentError("Give argument between 33 and 40")
     except util_4.ArgumentError, e:
